@@ -30,3 +30,6 @@ function Clear-TeamsCacheSubfolders {
 # Clear both new and classic Teams paths by targeting subfolders
 Clear-TeamsCacheSubfolders -basePath $newTeamsPath
 Clear-TeamsCacheSubfolders -basePath $classicTeamsPath
+
+# Confirmation message
+Write-Output "Microsoft Teams cache files and app directory cleaned without closing the app."
