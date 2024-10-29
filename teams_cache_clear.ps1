@@ -1,32 +1,32 @@
-# Get the current user's profile path
-$UserProfile = $env:USERPROFILE
+# Paths for New and Classic Teams
+$newTeamsPath = "C:\Users\$env:USERNAME\AppData\Local\Packages\MSTeams_8wekyb3d8bbwe"
+$classicTeamsPath = "$env:APPDATA\Microsoft\Teams"
 
-# Define the Teams cache folder path using the user's profile
-$TeamsCachePath = Join-Path -Path $UserProfile -ChildPath "AppData\Roaming\Microsoft\Teams"
+# Subfolders that typically hold cache files and can often be cleared while Teams is running
+$cacheSubfolders = @("Cache", "blob_storage", "databases", "GPUCache", "IndexedDB", "Local Storage", "tmp")
 
-# List of cache folders to clear
-$CacheFolders = @(
-    "blob_storage",
-    "Cache",
-    "databases",
-    "GPUCache",
-    "IndexedDB",
-    "Local Storage",
-    "tmp"
-)
+# Function to clear specific subfolder contents without displaying errors for missing paths
+function Clear-TeamsCacheSubfolders {
+    param (
+        [string]$basePath
+    )
 
-# Check if Teams cache folder exists
-if (Test-Path -Path $TeamsCachePath) {
-    foreach ($Folder in $CacheFolders) {
-        $CacheFolderPath = Join-Path -Path $TeamsCachePath -ChildPath $Folder
-        if (Test-Path -Path $CacheFolderPath) {
-            Remove-Item -Path $CacheFolderPath -Recurse -Force -ErrorAction SilentlyContinue
-            Write-Host "Cleared cache in: $CacheFolderPath"
-        } else {
-            Write-Host "Cache folder not found: $CacheFolderPath"
+    foreach ($subfolder in $cacheSubfolders) {
+        $fullPath = Join-Path -Path $basePath -ChildPath $subfolder
+        if (Test-Path -Path $fullPath) {
+            Remove-Item -Path "$fullPath\*" -Recurse -Force -ErrorAction SilentlyContinue
+
+            # Confirm clearance only if the folder existed
+            if ((Get-ChildItem -Path $fullPath -Recurse -ErrorAction SilentlyContinue).Count -eq 0) {
+                Write-Output "Cleared: $fullPath"
+            }
+            else {
+                Write-Output "Failed to clear: $fullPath (Some files might be in use)"
+            }
         }
     }
-    Write-Host "Microsoft Teams cache cleared successfully."
-} else {
-    Write-Host "Teams cache folder not found. Microsoft Teams may not be installed for the current user."
 }
+
+# Clear both new and classic Teams paths by targeting subfolders
+Clear-TeamsCacheSubfolders -basePath $newTeamsPath
+Clear-TeamsCacheSubfolders -basePath $classicTeamsPath
